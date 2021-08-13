@@ -1,0 +1,17 @@
+/*
+  Hot Tub Replacement Project Test Code
+ */
+ 
+int pushButton = 2;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(pushButton, INPUT);
+}
+
+void loop() {
+  // read the input pin:
+  int buttonState = digitalRead(pushButton);
+  Serial.println(buttonState);
+  delay(1);        // delay in between reads for stability
+}
