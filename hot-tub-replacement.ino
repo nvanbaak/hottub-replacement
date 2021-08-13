@@ -1,6 +1,7 @@
 int motorPins[3] = {12, 11, 10};
 int motorInput[3] = {1, 1, 1};
 int motorState[3] = {0, 0, 0};
+int inputDelay[3] = {0, 0, 0};
 
 void setup() {
   Serial.begin(9600);
@@ -15,40 +16,41 @@ void setup() {
 void loop() {
 
   for (int i = 0; i < 3; i++) {
-    int motorButtonState = digitalRead(motorPins[i]);
-    if (motorInput[i] != motorButtonState) {
-      motorInput[i] = motorButtonState;
+    // first check for a cooldown to avoid wasting time
+    if (inputDelay[i] > 0) {
+      inputDelay[i]--;
+      
+    } else {
+      // read input and determine if state has changed since last cycle   
+      int motorButtonState = digitalRead(motorPins[i]);
+      if (motorInput[i] != motorButtonState) {
+        motorInput[i] = motorButtonState;
 
-      if (motorButtonState == 0) {
-        Serial.println("toggle motor " + String(i));
-        delay(75);
+        // if the button went from open to pressed, we toggle the motor
+        if (motorButtonState == 0) {
+          toggleMotor(i);
+          inputDelay[i] = 250;
+        }
       }
-
     }
   }
+  
+  delay(1); // otherwise the inputDelay statement goes by way too fast
 
-//
-//  // call when input state changes
-//  if (input != inputState) {
-//      inputState = input;
-//
-//      // When button is depressed, change motor state and print
-//      if (input == 0) {
-//
-//        if (motorState < 2) {
-//          motorState++;
-//        } else {
-//          motorState = 0;
-//        }
-//
-//        displayMotorState("1");
-//      }
-//      
-//      delay(75);
-//  }
 }
 
-//void displayMotorState(String motorName) {
-//  String stateName[] = {"off", "low", "high"};
-//  Serial.println("Motor " + motorName + " is " + stateName[motorState] + ".");
-//}
+void toggleMotor(int motorID) {
+
+  if (motorState[motorID] < 2) {
+    motorState[motorID]++;
+  } else {
+    motorState[motorID] = 0;
+  }
+
+  displayMotorState(motorID);
+}
+
+void displayMotorState(int motorID) {
+  String stateName[] = {"off", "low", "high"};
+  Serial.println("Motor " + String(motorID) + " is " + stateName[motorState[motorID]] + ".");
+}
