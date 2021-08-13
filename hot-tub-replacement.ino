@@ -17,12 +17,16 @@ void loop() {
   for (int i = 0; i < 3; i++) {
     int motorButtonState = digitalRead(motorPins[i]);
     if (motorInput[i] != motorButtonState) {
+      motorInput[i] = motorButtonState;
 
-      Serial.println("toggle motor" + String(i));
+      if (motorButtonState == 0) {
+        Serial.println("toggle motor " + String(i));
+        delay(75);
+      }
+
     }
   }
 
-  //  Serial.println(input);
 //
 //  // call when input state changes
 //  if (input != inputState) {
