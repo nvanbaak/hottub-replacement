@@ -1,4 +1,5 @@
-int motorPins[3] = {12, 11, 10};
+const int motorPins[3] = {12, 11, 10};
+const int motorRelayPins[3] = {7, 6, 5};
 int motorInput[3] = {1, 1, 1};
 int motorState[3] = {0, 0, 0};
 int inputDelay[3] = {0, 0, 0};
@@ -7,10 +8,11 @@ void setup() {
   Serial.begin(9600);
 
   for (int i; i < 3; i++) {
-    pinMode(motorPins[i], INPUT_PULLUP);    
+    pinMode(motorPins[i], INPUT_PULLUP);  
+    pinMode(motorRelayPins[i], OUTPUT);
   }
+
   
-//  displayMotorState("1");
 }
 
 void loop() {
@@ -43,8 +45,10 @@ void toggleMotor(int motorID) {
 
   if (motorState[motorID] < 2) {
     motorState[motorID]++;
+    digitalWrite(motorRelayPins[motorID], HIGH);
   } else {
     motorState[motorID] = 0;
+    digitalWrite(motorRelayPins[motorID], LOW);
   }
 
   displayMotorState(motorID);
