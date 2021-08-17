@@ -22,8 +22,8 @@ void setup() {
 void loop() {
 
   if (tenSecondsElapsed()) {
-    int temp1 = getTemp(therm1);
-    int temp2 = getTemp(therm2);
+    double temp1 = getTemp(therm1);
+    double temp2 = getTemp(therm2);
     displayState(temp1, temp2);
   }
 
