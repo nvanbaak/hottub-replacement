@@ -51,7 +51,7 @@ void loop() {
 
 }
 
-int getTemp(int pinID) {
+double getTemp(int pinID) {
 
   // get input from specified pin
   int thermRead = analogRead(pinID);
