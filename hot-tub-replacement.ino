@@ -22,8 +22,8 @@ void setup() {
 void loop() {
 
   if (tenSecondsElapsed()) {
-    double temp1 = getTemp(therm1);
-    double temp2 = getTemp(therm2);
+    float temp1 = getTemp(therm1);
+    float temp2 = getTemp(therm2);
     displayState(temp1, temp2);
   }
 
@@ -51,19 +51,19 @@ void loop() {
 
 }
 
-double getTemp(int pinID) {
+float getTemp(int pinID) {
 
   // get input from specified pin
   int thermRead = analogRead(pinID);
 
   // normalize analog read as a proportion of 5V
-  double volts = (thermRead * 5) / 1024.0;
+  float volts = (thermRead * 5) / 1024.0;
   
   // convert voltage to resistance; this equation is for a voltage divider setup with a 22.1-kΩ resistor on the 5V end
-  double resistance = 22.1 * (5 - volts) / volts;
+  float resistance = 22.1 * (5 - volts) / volts;
 
   // convert resistance to temp; equation derived from a scatter plot of test data points
-  double temp = (-47.072 * log(resistance)) + 233.89;
+  float temp = (-47.072 * log(resistance)) + 233.89;
 
   return temp;
 }
@@ -86,7 +86,7 @@ bool tenSecondsElapsed() {
   
   unsigned long currentTime = millis();
   
-  if (currentTime - tenSecondCheck >= 1 * 1000) {
+  if (currentTime - tenSecondCheck >= 10 * 1000) {
     tenSecondCheck = currentTime;
     return true;
   } else {
@@ -99,7 +99,7 @@ void displayMotorState(int motorID) {
   Serial.println("Motor " + String(motorID) + " is " + stateName[motorState[motorID]] + ".");
 }
 
-void displayState(double temp1, double temp2) {
+void displayState(float temp1, float temp2) {
 //  Serial.println("Therm " + String(thermID) + ": thermRead = " + String(thermRead) + "; volts = " + String(volts) + "; resistance = " + String(resistance) + "; temp = " + String(temp));
-    Serial.println("Therms 1: " + String(temp1) + "; Therm 2: " + String(temp2) + "; Motors: " + "1:" + motorStateLabels[motorState[0]] + " 2:" + motorStateLabels[motorState[1]] + " 3:" + motorStateLabels[motorState[2]]);
+    Serial.println("Temp 1: " + String(temp1) + "; Temp 2: " + String(temp2) + "; Motors: " + "1:" + motorStateLabels[motorState[0]] + " 2:" + motorStateLabels[motorState[1]] + " 3:" + motorStateLabels[motorState[2]]);
 }
