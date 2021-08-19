@@ -38,6 +38,8 @@ void loop() {
 
   // Every ten seconds, adjust hot tub behavior
   if (timeSince(lastUpkeepCheck) >= 10 * 1000) {
+    lastUpkeepCheck = millis();
+    
     float temp1 = getTemp(therm1Pin);
     float temp2 = getTemp(therm2Pin);
 
