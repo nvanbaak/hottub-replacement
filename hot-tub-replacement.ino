@@ -8,15 +8,16 @@ const int heaterPin = 9;
 // Motor state tracking
 int motorInput[3] = {1, 1, 1};
 int motorState[3] = {0, 0, 0};
-int inputDelay[3] = {0, 0, 0};
-
+unsigned long inputLastTriggered[3] = {0, 0, 0};
+int motorInputDelayTime = 250; // in ms
+ 
 // heater / temperature variables
 int tempTarget = 90;
 bool heaterOn = false;
 bool heaterWasOn = false;
 
 // misc counters
-unsigned long tenSecondCheck = 0;
+unsigned long lastUpkeepCheck;
 
 
 void setup() {
@@ -36,7 +37,7 @@ void setup() {
 void loop() {
 
   // Every ten seconds, adjust hot tub behavior
-  if (tenSecondsElapsed()) {
+  if (timeSince(lastUpkeepCheck) >= 10 * 1000) {
     float temp1 = getTemp(therm1Pin);
     float temp2 = getTemp(therm2Pin);
 
@@ -46,14 +47,14 @@ void loop() {
   }
 
   for (int i = 0; i < 3; i++) {
-    // first check for a cooldown to avoid wasting time
-    if (inputDelay[i] > 0) {
-      inputDelay[i]--;
-      
-    } else {
+    
+    // if we haven't triggered recently,
+    if (timeSince(inputLastTriggered[i]) >= motorInputDelayTime) {
+
       // read input and determine if state has changed since last cycle  
       int motorButtonState = digitalRead(motorPins[i]);
       if (motorInput[i] != motorButtonState) {
+        
         // We're currently working with a one-motor scale model, so this switch statement is temporary
         switch (i) {
           case 0:
@@ -76,12 +77,13 @@ void loop() {
             Serial.println("Set desired temp to " + String(tempTarget));            
             break;
         }
-        inputDelay[i] = 250;
+
+        // tell the program that we've triggered
+        inputLastTriggered[i] = millis();
       }
     }
   }
-  delay(1); // otherwise the inputDelay statement goes by way too fast
-}
+} // end of loop()
 
 float getTemp(int pinID) {
 
@@ -113,29 +115,22 @@ void toggleMotor(int motorID) {
   displayMotorState(motorID);
 }
 
-
-bool tenSecondsElapsed() {
-  
-  unsigned long currentTime = millis();
-  
-  if (currentTime - tenSecondCheck >= 10 * 1000) {
-    tenSecondCheck = currentTime;
-    return true;
-  } else {
-    return false;
-  }
+unsigned long timeSince(unsigned long checkpoint) {
+  return millis() - checkpoint;
 }
 
 void heaterLogic(float temp1, float temp2) {
   // If heater is on, decide whether to turn it off
   if (heaterOn) {
-    if (temp2 > 105) { // Don't heat if hot tub is too hot
+    if (temp2 > 103) { // Don't heat if hot tub is too hot
       heaterOn = false;
     } else if (temp2 >= tempTarget) { // Don't heat if we've hit the target
       heaterOn = false;        
     }      
   } else {
-    if (temp2 < tempTarget - 1) { // heat if we're below the target
+    // heat if we're below the target; the offset constant is to prevent the heater flicking on and off
+    // Currently set to 3 because we're working with a scale model tub
+    if (temp2 < tempTarget - 3) { 
       heaterOn = true;
     }
   }
