@@ -4,20 +4,36 @@ const int therm2Pin = A1;
 const int motorPins[3] = {12, 11, 10};
 const int motorRelayPins[3] = {7, 6, 5};
 const int heaterPin = 9;
+const int tempControlPin = 4;
 
 // Motor state tracking
 int motorInput[3] = {1, 1, 1};
 int motorState[3] = {0, 0, 0};
 unsigned long inputLastTriggered[3] = {0, 0, 0};
 int motorInputDelayTime = 250; // in ms
- 
+
+// temperature input variables
+const int tempInputDelay = 250; // in ms
+const int tempInputTimeoutDelay = 750; // in ms
+unsigned long tempInputLastTriggered = 0;
+
 // heater / temperature variables
 int tempTarget = 90;
+float tempAvg1[2] = {0, 0};
+float rawTempData[2] = {0, 0};
+unsigned long lastTempCheck= 0;
+const int tempSampleRate = 100; // in ms
+int tempSamples = 0;
 bool heaterOn = false;
 bool heaterWasOn = false;
 
+// Priming variables
+
+
 // misc counters
+const int upkeepInterval = 10 * 1000; // in ms, so 10 seconds
 unsigned long lastUpkeepCheck;
+
 
 
 void setup() {
@@ -36,16 +52,19 @@ void setup() {
 
 void loop() {
 
-  // Every ten seconds, adjust hot tub behavior
-  if (timeSince(lastUpkeepCheck) >= 10 * 1000) {
-    lastUpkeepCheck = millis();
+  // temperature is taken multiple times per upkeep, then averaged
+  if ( timeSince(lastTempCheck) >= tempSampleRate ) {
+
+      rawTempData[0] += getTemp(therm1Pin);
+      rawTempData[1] += getTemp(therm2Pin);
+      tempSamples++;
     
-    float temp1 = getTemp(therm1Pin);
-    float temp2 = getTemp(therm2Pin);
+  }
 
-    heaterLogic(temp1, temp2);
-
-    displayState(temp1, temp2);
+  // Every ten seconds, adjust hot tub behavior
+  if (timeSince(lastUpkeepCheck) >= upkeepInterval) {
+    upkeep();
+    lastUpkeepCheck = millis();
   }
 
   for (int i = 0; i < 3; i++) {
@@ -87,6 +106,19 @@ void loop() {
   }
 } // end of loop()
 
+void upkeep() {    
+
+    float temp1 = rawTempData[0] / tempSamples;
+    float temp2 = rawTempData[1] / tempSamples;
+    rawTempData[0] = 0;
+    rawTempData[1] = 0;
+    tempSamples = 0;
+  
+    heaterLogic(temp1, temp2);
+
+    displayState(temp1, temp2);
+}
+
 float getTemp(int pinID) {
 
   // get input from specified pin
@@ -124,15 +156,15 @@ unsigned long timeSince(unsigned long checkpoint) {
 void heaterLogic(float temp1, float temp2) {
   // If heater is on, decide whether to turn it off
   if (heaterOn) {
-    if (temp2 > 103) { // Don't heat if hot tub is too hot
+    if (round(temp2) > 104) { // Don't heat if hot tub is too hot
       heaterOn = false;
-    } else if (temp2 >= tempTarget) { // Don't heat if we've hit the target
+    } else if (round(temp2) > tempTarget) { // Don't heat if we've hit the target
       heaterOn = false;        
     }      
   } else {
     // heat if we're below the target; the offset constant is to prevent the heater flicking on and off
     // Currently set to 3 because we're working with a scale model tub
-    if (temp2 < tempTarget - 3) { 
+    if (round(temp2) < tempTarget - 2) { 
       heaterOn = true;
     }
   }
