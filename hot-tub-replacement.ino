@@ -1,10 +1,10 @@
 // Arduino pin assignments
 const int therm1Pin = A0;
 const int therm2Pin = A1;
-const int motorPins[3] = {12, 11, 10};
-const int motorRelayPins[3] = {7, 6, 5};
-const int heaterPin = 9;
-const int tempControlPin = 4;
+const int motorPins[3] = {13, 12, 11};
+const int motorRelayPins[3] = {2, 3, 4};
+const int heaterPin = 6;
+const int tempControlPin = 5;
 
 // Motor state tracking
 int motorInput[3] = {1, 1, 1};
@@ -51,6 +51,7 @@ void setup() {
     pinMode(motorRelayPins[i], OUTPUT);
   }
   pinMode(heaterPin, OUTPUT);
+  pinMode(tempControlPin, INPUT_PULLUP);
 
   displayState(getTemp(therm1Pin), getTemp(therm2Pin));
 }
@@ -78,11 +79,12 @@ void loop() {
       // read input and determine if state has changed since last cycle  
       int motorButtonState = digitalRead(motorPins[i]);
       if (motorInput[i] != motorButtonState) {
-        
         motorInput[i] = motorButtonState;
-        // if the button went from open to pressed, we toggle the motor
-        toggleMotor(i);
-
+        if (motorInput[i] == HIGH) {
+          // if the button went from open to pressed, we toggle the motor
+          toggleMotor(i);
+        }
+        
         // tell the program that we've triggered
         inputLastTriggered[i] = millis();
       }
@@ -90,7 +92,7 @@ void loop() {
   }
 
   // check temp input
-  long tempInputTime = timeSince(tempInputLastTriggered)
+  long tempInputTime = timeSince(tempInputLastTriggered);
   if (tempInputTime > tempInputDelay) {
 
     // if debounce interval has passed, check if the input's changed
@@ -168,7 +170,7 @@ void heaterLogic(float temp1, float temp2) {
     }      
   } else {
     // heat if we're below the target; the offset constant is to prevent the heater flicking on and off
-    // Currently set to 3 because we're working with a scale model tub
+    // Currently set to 2 because we're working with a scale model tub
     if (round(temp2) < tempTarget - 2) { 
       heaterOn = true;
     }

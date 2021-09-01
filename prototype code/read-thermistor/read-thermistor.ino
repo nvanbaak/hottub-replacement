@@ -20,7 +20,7 @@ int getTemp(int pinID) {
   double volts = (thermRead * 5) / 1024.0;
   
   // convert voltage to resistance; this equation is for a voltage divider setup with a 22-kΩ resistor on the 5V end
-  double resistance = (110 - (22 * volts)) / volts;
+  double resistance = 22 * (5 - volts)) / volts;
 
   // convert resistance to temp; equation derived from a scatter plot of test data points
   double temp = (-47.072 * log(resistance)) + 233.89;
